@@ -9,13 +9,15 @@ import tensorflow_recommenders as tfrs
 # load emotions activities data
 emotion_activities = tf.data.experimental.CsvDataset(
   "/Users/gkar/git/zenith/server/recommender/datasets/emotion_activity.csv",
-  [tf.string,  # Required field, use dtype or empty tensor
-  tf.string,  # Required field, use dtype or empty tensor
-   tf.string,  # Required field, use dtype or empty tensor
-   tf.string,  # Required field, use dtype or empty tensor
+  [
+    tf.string, # Required field, use dtype or empty tensor
+    tf.string,  # Required field, use dtype or empty tensor
+    tf.string,  # Required field, use dtype or empty tensor
+     tf.string,  # Required field, use dtype or empty tensor
+     tf.string,  # Required field, use dtype or empty tensor
   ],
   header=True,
-  select_cols=[0,1,2,3]  # Only parse first two columns
+  select_cols=[0,1,2,3,4]  # Only parse first two columns
 )
 # Features of all the activities
 activities =tf.data.experimental.CsvDataset(
@@ -28,17 +30,20 @@ activities =tf.data.experimental.CsvDataset(
 )
 
 
-emotion_activities = emotion_activities.map(lambda a,b,c,d: {
-    "emotion": a,
-    "activity": b,
-    "emotionId": c,
-    "activityId": d
+emotion_activities = emotion_activities.map(lambda a,b,c,d,e: {
+    "userId": a,
+    "emotion": b,
+    "activity": c,
+    "emotionId": d,
+    "activityId": e
 
 })
 
 activities = activities.map(lambda x,y: x)
 
-
+# get unique user ids
+unique_user_ids = np.unique(np.concatenate(list(emotion_activities.batch(1_000).map(
+    lambda x: x["user_id"]))))
 
 emotion_ids_vocabulary = tf.keras.layers.StringLookup(mask_token=None)
 emotion_ids_vocabulary.adapt(emotion_activities.map(lambda x: x['emotionId']))
